@@ -58,6 +58,7 @@ float Kp =40;
 float Ki=20;
 float Kd=1;
 int Setspd=15;
+int speedSet;
 float spdrec[2]={0};
 float speed=0;
 uint16_t PWMOut = 10000;
@@ -148,23 +149,38 @@ int main(void)
 		if (micros() - Timestamp_Encoder >= 100)
 		{
 			Timestamp_Encoder = micros();
-
-			Error = Setspd-speed;
+			if(speed<0){
+				speed=speed*(-1);
+			}else{
+				speed=speed;
+			}
+			if(Setspd<0){
+				speedSet=Setspd*(-1);
+			}else{
+				speedSet=Setspd;
+			}
+			Error = (speedSet-speed)*768/15;
 				  			P_val = Kp*Error;
-				  			integrate += Error*0.01;
+				  			integrate += Error*0.0001;
 				  			I_val = Ki*integrate;
 				  			spdrec[1]=Error;
-				  			Differential =(spdrec[1]-spdrec[0])/0.01;
+				  			Differential =(spdrec[1]-spdrec[0])/0.0001;
 				  			D_val = Kd*Differential;
 				  				if(speed != Setspd){
 				  				PWMOut =P_val + I_val + D_val;
+				  						  		}else{
+				  						  			PWMOut=PWMOut;
 				  						  		}
 				  				PWM[1]=PWMOut;
-				  				if(PWM[1]-PWM[0]>1000){
+				  				if(PWM[1]-PWM[0]>250 || PWM[0]-PWM[1]>250){
 				  					PWMOut=PWM[0];
+				  				}else{
+				  					PWM[0]=PWM[0];
 				  				}
 				  				if(PWMOut>10000){
 				  					PWMOut=10000;
+				  				}else{
+				  					PWMOut=PWMOut;
 				  				}
 				  			if(Setspd>=0){
 				  			__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, PWMOut);
@@ -174,10 +190,11 @@ int main(void)
 				  				__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, PWMOut);
 				  			}
 			EncoderVel = (EncoderVel * 999 + EncoderVelocity_Update()) / 1000.0;
+			speed = (EncoderVel*15/768) ;
+			 spdrec[0]=Error;
+					  PWM[0] = PWMOut;
 		}
-		  speed = (EncoderVel*15/768) ;
-		  spdrec[0]=Error;
-		  PWM[0] = PWMOut;
+
 	}
   /* USER CODE END 3 */
 }
