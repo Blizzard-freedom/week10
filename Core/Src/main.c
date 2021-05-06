@@ -61,8 +61,8 @@ int Setspd=15;
 int speedSet;
 float spdrec[2]={0};
 float speed=0;
+float speedS=0;
 uint16_t PWMOut = 10000;
-uint16_t PWM[2]={0};
 uint64_t _micros = 0;
 float EncoderVel = 0;
 uint64_t Timestamp_Encoder = 0;
@@ -150,16 +150,16 @@ int main(void)
 		{
 			Timestamp_Encoder = micros();
 			if(speed<0){
-				speed=speed*(-1);
+				speedS=speed*(-1);
 			}else{
-				speed=speed;
+				speedS=speed;
 			}
 			if(Setspd<0){
 				speedSet=Setspd*(-1);
 			}else{
 				speedSet=Setspd;
 			}
-			Error = (speedSet-speed)*768/15;
+			Error = (speedSet-speedS)*768/15;
 				  			P_val = Kp*Error;
 				  			integrate += Error*0.0001;
 				  			I_val = Ki*integrate;
@@ -171,12 +171,6 @@ int main(void)
 				  						  		}else{
 				  						  			PWMOut=PWMOut;
 				  						  		}
-				  				PWM[1]=PWMOut;
-				  				if(PWM[1]-PWM[0]>250 || PWM[0]-PWM[1]>250){
-				  					PWMOut=PWM[0];
-				  				}else{
-				  					PWM[0]=PWM[0];
-				  				}
 				  				if(PWMOut>10000){
 				  					PWMOut=10000;
 				  				}else{
@@ -189,10 +183,9 @@ int main(void)
 				  				__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 0);
 				  				__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, PWMOut);
 				  			}
-			EncoderVel = (EncoderVel * 999 + EncoderVelocity_Update()) / 1000.0;
-			speed = (EncoderVel*15/768) ;
+			EncoderVel = (EncoderVel * 499 + EncoderVelocity_Update()) / 500.0;
+			speed = (EncoderVel*15)/768 ;
 			 spdrec[0]=Error;
-					  PWM[0] = PWMOut;
 		}
 
 	}
@@ -525,7 +518,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 #define  HTIM_ENCODER htim1
 #define  MAX_SUBPOSITION_OVERFLOW 1536
-#define  MAX_ENCODER_PERIOD 3072
+#define  MAX_ENCODER_PERIOD 64512
 
 float EncoderVelocity_Update()
 {
